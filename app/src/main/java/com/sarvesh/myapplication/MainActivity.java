@@ -3,7 +3,6 @@ package com.sarvesh.myapplication;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,7 +11,6 @@ import android.view.View;
 import android.view.Menu;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -27,11 +25,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.UnknownHostException;
 
 import androidx.annotation.Nullable;
@@ -46,7 +41,7 @@ import androidx.appcompat.widget.Toolbar;
 public class MainActivity extends AppCompatActivity {
 
     //////////////////////////////////////////////////
-    public String HOST = "192.168.43.215";
+    public String HOST = "192.168.43.205";
     public int Port = 1234;
     public String message;
     public String name;
@@ -134,6 +129,19 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected Void doInBackground(Void... params) {
+                //send name
+                sendName();
+                //send photo
+                try {
+                    sendFileToServer();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            void sendName()
+            {
                 //prepration
                 try{
                     s = new Socket(HOST,Port);
@@ -154,41 +162,34 @@ public class MainActivity extends AppCompatActivity {
                     pw.write("0"+nameBytesLengthString);}
                 else
                     pw.write(nameBytesLengthString);
-
                 //send name
                 pw.write(name);
                 pw.flush();
                 pw.close();
                 //s.close();
-
-                //send photo
-                try {
-                    sendFileToServer();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
             }
+             void sendFileToServer () throws UnknownHostException, IOException {
 
-
-           public void sendFileToServer () throws UnknownHostException, IOException {
-
-                //ServerSocket servsock = new ServerSocket(1234);
-                File myFile = new File((uri.getPath()));
+                //File myFile = new File((uri.getPath()));
+                File myFile = new File("app\\src\\main\\res\\drawable\\avatar.png");
 
                 while (true) {
-                    //Socket socket = servsock.accept();
-
                     byte[] mybytearray = new byte[(int) myFile.length()];
                     BufferedInputStream bis = new BufferedInputStream(new FileInputStream(myFile));
                     bis.read(mybytearray, 0, mybytearray.length);
                     //now file is available in mybytearray
 
+                    //send photo size
+                    pw = new PrintWriter(s.getOutputStream());
+                    String photoImageLengthString = Integer.toString(mybytearray.length);
+                    pw.write(photoImageLengthString);
+                    pw.flush();
+                    pw.close();
                     //now writing this mybytearray image to outputstream
-                    OutputStream ost = s.getOutputStream();
+                    /*OutputStream ost = s.getOutputStream();
                     ost.write(mybytearray, 0, mybytearray.length);
-                    ost.flush();
-                    s.close();
+                    ost.flush();*/
+                    //s.close();
                 }
             }
 
