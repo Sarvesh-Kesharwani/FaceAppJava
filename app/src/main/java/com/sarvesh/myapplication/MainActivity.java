@@ -1,7 +1,10 @@
 package com.sarvesh.myapplication;
 
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -13,6 +16,7 @@ import android.view.View;
 import android.view.Menu;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageSwitcher;
 import android.widget.ImageView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -21,6 +25,8 @@ import com.google.android.material.navigation.NavigationView;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -32,6 +38,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 
 import androidx.annotation.Nullable;
 import androidx.navigation.NavController;
@@ -106,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
               }
         });
 ///////////////////////////////////////////////
+
        }
 ///////////////////////////////////////////////
 
@@ -175,11 +183,16 @@ public class MainActivity extends AppCompatActivity {
                 //s.close();
             }
             void sendFileToServer () throws UnknownHostException, IOException {
-
                 //convert from bitmap-image to byteArray
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                photoBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                photoBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
                 byte[] mybytearray = stream.toByteArray();
+
+                Bitmap testbitmap = BitmapFactory.decodeStream(new ByteArrayInputStream(mybytearray));
+                setContentView(R.layout.fragment_home);
+                ImageView imageView = findViewById(R.id.imageView2);
+                imageView.setImageBitmap(testbitmap);
+
                 //now file is available in mybytearray
 
                 //send photo size
@@ -188,15 +201,28 @@ public class MainActivity extends AppCompatActivity {
                 pw = new PrintWriter(s.getOutputStream());
                 pw.write(photoImageLengthString);
                 pw.flush();
-               //pw.close();
 
+                //send END to stop taking inputStream inside photo_length var and taking it into photo_image var
+                pw.write('E');
+                pw.flush();
+                //pw.close();
+                //////////////////////////////////////////////////////////
                 //now send the photo_image_file
                 /*int i = 0;
                 while(i != mybytearray.length)
                 {
                     pw.write(mybytearray[i]);
                 }*/
-                pw.write(String.valueOf(mybytearray));
+/*
+                MemoryStream stream = new MemoryStream ();
+                photoBitmap.Compress(Bitmap.CompressFormat.Jpeg, 100, stream);
+                Image img = Image.FromArray (stream.ToArray());
+
+                File file = new File(img);
+                ImageView imageView = findViewById(R.id.imageView2);
+                imageView.setImageDrawable(Drawable.createFromPath(file.toString()));
+*/
+                pw.write(mybytearray.toString());
                 pw.flush();
                 pw.close();
             }
