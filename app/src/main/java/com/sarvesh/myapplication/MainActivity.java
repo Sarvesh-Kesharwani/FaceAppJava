@@ -52,7 +52,7 @@ import androidx.appcompat.widget.Toolbar;
 public class MainActivity extends AppCompatActivity {
 
     //////////////////////////////////////////////////
-    public String HOST = "192.168.43.205";
+    public String HOST = "192.168.43.215";
     public int Port = 1234;
     public String message;
     public String name;
@@ -181,21 +181,17 @@ public class MainActivity extends AppCompatActivity {
                 pw.flush();
                 //pw.close();
                 //s.close();
+
+
             }
+
             void sendFileToServer () throws UnknownHostException, IOException {
                 //convert from bitmap-image to byteArray
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 photoBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
                 byte[] mybytearray = stream.toByteArray();
 
-                Bitmap testbitmap = BitmapFactory.decodeStream(new ByteArrayInputStream(mybytearray));
-                setContentView(R.layout.fragment_home);
-                ImageView imageView = findViewById(R.id.imageView2);
-                imageView.setImageBitmap(testbitmap);
-
-                //now file is available in mybytearray
-
-                //send photo size
+               /* //send photo size
                 String photoImageLengthString = Integer.toString(mybytearray.length);
                 Log.d("tog", photoImageLengthString);
                 pw = new PrintWriter(s.getOutputStream());
@@ -204,29 +200,39 @@ public class MainActivity extends AppCompatActivity {
 
                 //send END to stop taking inputStream inside photo_length var and taking it into photo_image var
                 pw.write('E');
-                pw.flush();
-                //pw.close();
-                //////////////////////////////////////////////////////////
-                //now send the photo_image_file
-                /*int i = 0;
-                while(i != mybytearray.length)
+                pw.flush();*/
+
+                //send image size and image itself
+                try
                 {
-                    pw.write(mybytearray[i]);
-                }*/
-/*
-                MemoryStream stream = new MemoryStream ();
-                photoBitmap.Compress(Bitmap.CompressFormat.Jpeg, 100, stream);
-                Image img = Image.FromArray (stream.ToArray());
+                    ByteArrayOutputStream stream1 = new ByteArrayOutputStream();
+                    photoBitmap.compress(Bitmap.CompressFormat.JPEG, 100,stream);
+                    byte[] byteArray = stream1.toByteArray();
+                    InputStream inn = new ByteArrayInputStream(byteArray);
 
-                File file = new File(img);
-                ImageView imageView = findViewById(R.id.imageView2);
-                imageView.setImageDrawable(Drawable.createFromPath(file.toString()));
-*/
-                pw.write(mybytearray.toString());
-                pw.flush();
-                pw.close();
+                    DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+                    dos.writeInt(byteArray.length);
+
+                    int len = 0 ;
+                    int bytesRead = 0;
+
+                    byte [] buffer = new byte [1024];
+                    while (len<byteArray.length)
+                    {
+                        bytesRead = inn.read(buffer, 0, (int)Math.min(buffer.length, byteArray.length-len));
+                        len = len + bytesRead;
+                        dos.write(buffer, 0, bytesRead);
+                    }
+                    dos.flush();
+                    stream1.close();
+                    inn.close();
+                }
+                catch (IOException ioe)
+                {
+                    Log.d("Exception Caught", ioe.getMessage());
+                }
+
             }
-
 
             public void receiveFileFromServer () throws UnknownHostException, IOException {
                 Socket sock = new Socket("192.168.1.10", 5555);
