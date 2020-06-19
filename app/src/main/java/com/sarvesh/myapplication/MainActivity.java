@@ -167,31 +167,31 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println("Fail");
                     e.printStackTrace();
                 }
-                //send NAME_LENGTH
+                //preparing to send name_length
                 byte[] nameBytes = name.getBytes();
                 int nameBytesLength = nameBytes.length;
                 String nameBytesLengthString = Integer.toString(nameBytesLength);
-                if (nameBytesLength <= 9)
-                {System.out.println(nameBytesLength);
-                    pw.write("0"+nameBytesLengthString);}
-                else
-                    pw.write(nameBytesLengthString);
+
+                //send name_length
+                pw.write(nameBytesLengthString);
+                //sending delimeter
+                pw.write("$");
                 //send name
                 pw.write(name);
+                pw.write("$");
                 pw.flush();
                 //pw.close();
                 //s.close();
 
-
             }
 
             void sendFileToServer () throws UnknownHostException, IOException {
-                //convert from bitmap-image to byteArray
+                /* //convert from bitmap-image to byteArray
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 photoBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
                 byte[] mybytearray = stream.toByteArray();
 
-               /* //send photo size
+               //send photo size
                 String photoImageLengthString = Integer.toString(mybytearray.length);
                 Log.d("tog", photoImageLengthString);
                 pw = new PrintWriter(s.getOutputStream());
@@ -205,14 +205,14 @@ public class MainActivity extends AppCompatActivity {
                 //send image size and image itself
                 try
                 {
-                    ByteArrayOutputStream stream1 = new ByteArrayOutputStream();
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     photoBitmap.compress(Bitmap.CompressFormat.JPEG, 100,stream);
-                    byte[] byteArray = stream1.toByteArray();
+                    byte[] byteArray = stream.toByteArray();
                     InputStream inn = new ByteArrayInputStream(byteArray);
 
                     DataOutputStream dos = new DataOutputStream(s.getOutputStream());
                     dos.writeInt(byteArray.length);
-
+                    Log.d("yolo", String.valueOf(byteArray.length));
                     int len = 0 ;
                     int bytesRead = 0;
 
@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
                         dos.write(buffer, 0, bytesRead);
                     }
                     dos.flush();
-                    stream1.close();
+                    stream.close();
                     inn.close();
                 }
                 catch (IOException ioe)
