@@ -22,6 +22,7 @@ import com.google.android.material.navigation.NavigationView;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -184,9 +185,18 @@ public class MainActivity extends AppCompatActivity {
                 //send photo size
                 String photoImageLengthString = Integer.toString(mybytearray.length);
                 Log.d("tog", photoImageLengthString);
-
                 pw = new PrintWriter(s.getOutputStream());
                 pw.write(photoImageLengthString);
+                pw.flush();
+               //pw.close();
+
+                //now send the photo_image_file
+                /*int i = 0;
+                while(i != mybytearray.length)
+                {
+                    pw.write(mybytearray[i]);
+                }*/
+                pw.write(String.valueOf(mybytearray));
                 pw.flush();
                 pw.close();
             }
