@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Html;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.widget.Button;
@@ -19,6 +21,7 @@ import com.google.android.material.navigation.NavigationView;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -49,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     public int SELECT_PHOTO = 1;
     public Uri uri;
     public ImageView photoImage;
-
+    public Bitmap photoBitmap;
 
     //////////////////////////////////////////////////
     private AppBarConfiguration mAppBarConfiguration;
@@ -113,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
                 photoImage.setImageBitmap(bitmap);
+                photoBitmap = bitmap;
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -131,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
             protected Void doInBackground(Void... params) {
                 //send name
                 sendName();
+                Log.d("first",name);
                 //send photo
                 try {
                     sendFileToServer();
@@ -165,33 +170,27 @@ public class MainActivity extends AppCompatActivity {
                 //send name
                 pw.write(name);
                 pw.flush();
-                pw.close();
+                //pw.close();
                 //s.close();
             }
-             void sendFileToServer () throws UnknownHostException, IOException {
+            void sendFileToServer () throws UnknownHostException, IOException {
 
-                //File myFile = new File((uri.getPath()));
-                File myFile = new File("app\\src\\main\\res\\drawable\\avatar.png");
+                //convert from bitmap-image to byteArray
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                photoBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                byte[] mybytearray = stream.toByteArray();
+                //now file is available in mybytearray
 
-                while (true) {
-                    byte[] mybytearray = new byte[(int) myFile.length()];
-                    BufferedInputStream bis = new BufferedInputStream(new FileInputStream(myFile));
-                    bis.read(mybytearray, 0, mybytearray.length);
-                    //now file is available in mybytearray
+                //send photo size
+                String photoImageLengthString = Integer.toString(mybytearray.length);
+                Log.d("tog", photoImageLengthString);
 
-                    //send photo size
-                    pw = new PrintWriter(s.getOutputStream());
-                    String photoImageLengthString = Integer.toString(mybytearray.length);
-                    pw.write(photoImageLengthString);
-                    pw.flush();
-                    pw.close();
-                    //now writing this mybytearray image to outputstream
-                    /*OutputStream ost = s.getOutputStream();
-                    ost.write(mybytearray, 0, mybytearray.length);
-                    ost.flush();*/
-                    //s.close();
-                }
+                pw = new PrintWriter(s.getOutputStream());
+                pw.write(photoImageLengthString);
+                pw.flush();
+                pw.close();
             }
+
 
             public void receiveFileFromServer () throws UnknownHostException, IOException {
                 Socket sock = new Socket("192.168.1.10", 5555);
