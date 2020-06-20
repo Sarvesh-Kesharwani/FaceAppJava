@@ -139,7 +139,9 @@ public class MainActivity extends AppCompatActivity {
         class send extends AsyncTask<Void, Void, Void> {
              Socket s;
              PrintWriter pw;
-
+             Socket s1;
+            PrintWriter pw1;
+            Socket s2;
             @Override
             protected Void doInBackground(Void... params) {
                 //send name
@@ -171,17 +173,21 @@ public class MainActivity extends AppCompatActivity {
                 }
                 //preparing to send name_length
                 byte[] nameBytes = name.getBytes();
-                int nameBytesLength = nameBytes.length;
+                int nameBytesLength = nameBytes.length;//no of charaters in the name
                 String nameBytesLengthString = Integer.toString(nameBytesLength);
 
                 //send name_length
-                if (nameBytesLength % 10 == 0)
-                    pw.write(nameBytesLengthString);
-                else
-                    pw.write('0' + nameBytesLengthString);
-
+                if(nameBytesLength<100)
+                {
+                    if (nameBytesLength <= 9)
+                        pw.write('0' +nameBytesLengthString);
+                    else
+                        pw.write(nameBytesLengthString);
+                }
                 pw.write(name);
                 pw.flush();
+                pw.close();
+                s.close();
             }
 
             void sendFileToServer () throws UnknownHostException, IOException {
@@ -201,7 +207,25 @@ public class MainActivity extends AppCompatActivity {
                 pw.write('E');
                 pw.flush();*/
                 //send image size and image itself
-
+                try {
+                    s1 = new Socket(HOST, Port);
+                    pw1 = new PrintWriter(s1.getOutputStream());
+                } catch (UnknownHostException e) {
+                    System.out.println("Fail");
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    System.out.println("Fail");
+                    e.printStackTrace();
+                }
+                try {
+                    s2 = new Socket(HOST, Port);
+                } catch (UnknownHostException e) {
+                    System.out.println("Fail");
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    System.out.println("Fail");
+                    e.printStackTrace();
+                }
                 try
                 {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -209,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                     byte[] byteArray = stream.toByteArray();
                     InputStream inn = new ByteArrayInputStream(byteArray);
 
-                    DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+                    DataOutputStream dos = new DataOutputStream(s2.getOutputStream());
                     //dos.writeInt(byteArray.length);
                     int len = 0 ;
                     int bytesRead = 0;
@@ -221,26 +245,19 @@ public class MainActivity extends AppCompatActivity {
                         len = len + bytesRead;
                         dos.write(buffer, 0, bytesRead);
                     }
-                    pw.write(len);
-                    pw.write('$');
-                    pw.flush();
-                    pw.close();
-                    s.close();
-                    try {
-                        s = new Socket(HOST, Port);
-                    } catch (UnknownHostException e) {
-                        System.out.println("Fail");
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        System.out.println("Fail");
-                        e.printStackTrace();
-                    }
+
+                    pw1.write(String.valueOf(len)+'$');
+                    Log.d("finally", String.valueOf(byteArray.length));
+                    pw1.flush();
+                    pw1.close();
+                    s1.close();
+
 
                     dos.flush();
                     stream.close();
                     inn.close();
                     dos.close();
-                    s.close();
+                    s2.close();
                 }
                 catch (IOException ioe)
                 {
