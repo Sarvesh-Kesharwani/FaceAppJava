@@ -217,24 +217,33 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println("Fail");
                     e.printStackTrace();
                 }
-                try {
-                    s2 = new Socket(HOST, Port);
-                } catch (UnknownHostException e) {
-                    System.out.println("Fail");
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    System.out.println("Fail");
-                    e.printStackTrace();
-                }
+
                 try
                 {
+                    //preparing bytearray of photo
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     photoBitmap.compress(Bitmap.CompressFormat.JPEG, 100,stream);
                     byte[] byteArray = stream.toByteArray();
                     InputStream inn = new ByteArrayInputStream(byteArray);
 
+                    //sending bytearray_length or image_length
+                    pw1.write(String.valueOf(byteArray.length)+'$');
+                    Log.d("finally", String.valueOf(byteArray.length));
+                    pw1.flush();
+                    pw1.close();
+                    s1.close();
+
+                    //making 3rd connection with pyjnius for sending photo
+                    try {
+                        s2 = new Socket(HOST, Port);
+                    } catch (UnknownHostException e) {
+                        System.out.println("Fail");
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        System.out.println("Fail");
+                        e.printStackTrace();
+                    }
                     DataOutputStream dos = new DataOutputStream(s2.getOutputStream());
-                    //dos.writeInt(byteArray.length);
                     int len = 0 ;
                     int bytesRead = 0;
 
@@ -245,13 +254,6 @@ public class MainActivity extends AppCompatActivity {
                         len = len + bytesRead;
                         dos.write(buffer, 0, bytesRead);
                     }
-
-                    pw1.write(String.valueOf(len)+'$');
-                    Log.d("finally", String.valueOf(byteArray.length));
-                    pw1.flush();
-                    pw1.close();
-                    s1.close();
-
 
                     dos.flush();
                     stream.close();
