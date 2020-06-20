@@ -52,7 +52,7 @@ import androidx.appcompat.widget.Toolbar;
 public class MainActivity extends AppCompatActivity {
 
     //////////////////////////////////////////////////
-    public String HOST = "192.168.43.215";
+    public String HOST = "192.168.43.205";
     public int Port = 1234;
     public String message;
     public String name;
@@ -143,8 +143,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Void... params) {
                 //send name
-                sendName();
-                Log.d("first",name);
+                try {
+                    sendName();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 //send photo
                 try {
                     sendFileToServer();
@@ -154,16 +157,15 @@ public class MainActivity extends AppCompatActivity {
                 return null;
             }
 
-            void sendName()
-            {
+            void sendName() throws IOException {
                 //prepration
-                try{
-                    s = new Socket(HOST,Port);
+                try {
+                    s = new Socket(HOST, Port);
                     pw = new PrintWriter(s.getOutputStream());
-                } catch (UnknownHostException e){
+                } catch (UnknownHostException e) {
                     System.out.println("Fail");
                     e.printStackTrace();
-                } catch (IOException e){
+                } catch (IOException e) {
                     System.out.println("Fail");
                     e.printStackTrace();
                 }
@@ -173,16 +175,13 @@ public class MainActivity extends AppCompatActivity {
                 String nameBytesLengthString = Integer.toString(nameBytesLength);
 
                 //send name_length
-                pw.write(nameBytesLengthString);
-                //sending delimeter
-                pw.write("$");
-                //send name
-                pw.write(name);
-                pw.write("$");
-                pw.flush();
-                //pw.close();
-                //s.close();
+                if (nameBytesLength % 10 == 0)
+                    pw.write(nameBytesLengthString);
+                else
+                    pw.write('0' + nameBytesLengthString);
 
+                pw.write(name);
+                pw.flush();
             }
 
             void sendFileToServer () throws UnknownHostException, IOException {
@@ -201,8 +200,8 @@ public class MainActivity extends AppCompatActivity {
                 //send END to stop taking inputStream inside photo_length var and taking it into photo_image var
                 pw.write('E');
                 pw.flush();*/
-
                 //send image size and image itself
+
                 try
                 {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -211,8 +210,7 @@ public class MainActivity extends AppCompatActivity {
                     InputStream inn = new ByteArrayInputStream(byteArray);
 
                     DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-                    dos.writeInt(byteArray.length);
-                    Log.d("yolo", String.valueOf(byteArray.length));
+                    //dos.writeInt(byteArray.length);
                     int len = 0 ;
                     int bytesRead = 0;
 
@@ -223,14 +221,32 @@ public class MainActivity extends AppCompatActivity {
                         len = len + bytesRead;
                         dos.write(buffer, 0, bytesRead);
                     }
+                    pw.write(len);
+                    pw.write('$');
+                    pw.flush();
+                    pw.close();
+                    s.close();
+                    try {
+                        s = new Socket(HOST, Port);
+                    } catch (UnknownHostException e) {
+                        System.out.println("Fail");
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        System.out.println("Fail");
+                        e.printStackTrace();
+                    }
+
                     dos.flush();
                     stream.close();
                     inn.close();
+                    dos.close();
+                    s.close();
                 }
                 catch (IOException ioe)
                 {
                     Log.d("Exception Caught", ioe.getMessage());
                 }
+                s.close();
 
             }
 
