@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Html;
 import android.util.Log;
@@ -35,10 +36,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import androidx.annotation.Nullable;
 import androidx.navigation.NavController;
@@ -61,9 +65,10 @@ public class MainActivity extends AppCompatActivity {
     public Uri uri;
     public ImageView photoImage;
     public Bitmap photoBitmap;
-
+    public String PhotoPath;
     //////////////////////////////////////////////////
     private AppBarConfiguration mAppBarConfiguration;
+    public FileOutputStream ImageStream;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,6 +136,14 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            ////////////////////////////////
+            try (FileOutputStream fos = new FileOutputStream("")) {
+                photoBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                ImageStream = fos;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            ////////////////////////////////////
         }
     }
 
@@ -151,11 +164,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 //send photo
-                try {
-                    sendFileToServer();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    sendFile();
                 return null;
             }
 
@@ -190,23 +199,9 @@ public class MainActivity extends AppCompatActivity {
                 s.close();
             }
 
-            void sendFileToServer () throws UnknownHostException, IOException {
-                /* //convert from bitmap-image to byteArray
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                photoBitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
-                byte[] mybytearray = stream.toByteArray();
-
-               //send photo size
-                String photoImageLengthString = Integer.toString(mybytearray.length);
-                Log.d("tog", photoImageLengthString);
-                pw = new PrintWriter(s.getOutputStream());
-                pw.write(photoImageLengthString);
-                pw.flush();
-
-                //send END to stop taking inputStream inside photo_length var and taking it into photo_image var
-                pw.write('E');
-                pw.flush();*/
-                //send image size and image itself
+            void sendFile()
+            {
+                //call this function after making a connection with pure python.like below
                 try {
                     s1 = new Socket(HOST, Port);
                     pw1 = new PrintWriter(s1.getOutputStream());
@@ -217,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println("Fail");
                     e.printStackTrace();
                 }
-
                 try
                 {
                     //preparing bytearray of photo
@@ -244,9 +238,18 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                     DataOutputStream dos = new DataOutputStream(s2.getOutputStream());
+
+                    //sending photo delimeter
+                    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode("?start\n");
+                    byte [] buff = new byte [byteBuffer.remaining()];
+                    dos.write(buff, 0, "?start\n".length());
+
+                    //send photo size with new way
+                    String strSize = String.valueOf(byteArray.length) + "\n";
+                    dos.write(Integer.parseInt(strSize));
+
                     int len = 0 ;
                     int bytesRead = 0;
-
                     byte [] buffer = new byte [1024];
                     while (len<byteArray.length)
                     {
@@ -265,9 +268,27 @@ public class MainActivity extends AppCompatActivity {
                 {
                     Log.d("Exception Caught", ioe.getMessage());
                 }
-                s.close();
 
             }
+          /*  void sendPhotoEncoding () throws UnknownHostException, IOException {
+                try {
+                    s1 = new Socket(HOST, Port);
+                    pw1 = new PrintWriter(s1.getOutputStream());
+                } catch (UnknownHostException e) {
+                    System.out.println("Fail");
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    System.out.println("Fail");
+                    e.printStackTrace();
+                }
+                /*
+                System.out.println("Executing python3 script:");
+                Process p = Runtime.getRuntime().exec("python3"+);
+                BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                String ret = in.readLine();
+                Log.d("tyyo","value is :"+ret);
+                s.close();
+            }*/
 
             public void receiveFileFromServer () throws UnknownHostException, IOException {
                 Socket sock = new Socket("192.168.1.10", 5555);
